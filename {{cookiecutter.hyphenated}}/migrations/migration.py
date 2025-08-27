@@ -9,6 +9,7 @@ from pathlib import Path
 import sys
 import datetime
 import os
+from loguru import logger
 
 logger.remove()
 logger.add(sys.stderr, level="INFO", format="{time} {level} {message}")
@@ -44,11 +45,16 @@ def run_migrations(db_path:Path):
             conn.executescript(sql)
             cur.execute(
                 "INSERT INTO schema_migrations (filename, applied_at) VALUES (?, ?)",
-                (filename, datetime.datetime.now(datetime.timezone.utc)),
+                (filename, datetime.datetime.now(datetime.timezone.utc).isoformat(" ")),
             )
 
 if __name__ == "__main__":
     db_path = os.getenv("DATABASE_PATH")
+    if not db_path:
+        logger.error("DATABASE_PATH environment variable not set")
+        sys.exit(1)
+    
+    db_path = Path(db_path)
     args = sys.argv[1:]
     if args and args[0] == "--reset":
         conn = sqlite3.connect(db_path)
