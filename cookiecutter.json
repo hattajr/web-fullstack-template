@@ -6,5 +6,10 @@
   "github_username": "",
   "author_name": "",
   "_dot_gitignore": ".gitignore",
-  "_dot_trash": ".trash"
+  "_dot_trash": ".trash",
+  "_copy_without_render": [
+    "*.js",
+    "*.html"
+  ]
+
 }
