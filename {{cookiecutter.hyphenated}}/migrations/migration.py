@@ -14,7 +14,28 @@ from loguru import logger
 logger.remove()
 logger.add(sys.stderr, level="INFO", format="{time} {level} {message}")
 
-def run_migrations(db_path:Path):
+def create_migration_versioning_table(db_file_path):
+    db_file_path = Path(db_file_path)
+
+    sql_schema_migration = """
+        PRAGMA foreign_keys = ON;
+        PRAGMA journal_mode = WAL;
+        PRAGMA synchronous = NORMAL;
+        PRAGMA temp_store = MEMORY;
+        PRAGMA cache_size = -20000;
+        PRAGMA busy_timeout = 5000;
+
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            filename TEXT PRIMARY KEY,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );"""
+    
+    conn = sqlite3.connect(db_file_path)
+    with conn:
+        conn.executescript(sql_schema_migration)
+    logger.info("Migration versioning table created.")
+
+def run_migrations(db_path: Path):
     if not db_path.exists():
         logger.error(f"Database file not found: {db_path}")
         raise Exception("Database file not found")
@@ -23,30 +44,43 @@ def run_migrations(db_path:Path):
     if not migration_dir.exists():
         logger.error(f"Migrations directory not found: {migration_dir}")
         raise Exception("Migrations directory not found")
-
+    
     conn = sqlite3.connect(db_path)
-    with conn:
-        cur = conn.cursor()
-        # read sql file
-        for sql_file in migration_dir.glob("*.sql"):
+    
+    try:
+        for sql_file in sorted(migration_dir.glob("*.sql")):
             filename = sql_file.name
-            logger.info(f"Applying migration: {filename}")
-            conn.execute(
+            
+            applied = conn.execute(
                 "SELECT 1 FROM schema_migrations WHERE filename = ?", (filename,)
-            )
-            applied = cur.fetchone()
+            ).fetchone()
             if applied:
-                logger.info(f"Already applied: {filename}")
                 continue
-
-            with open(sql_file) as f:
+            
+            with open(sql_file, 'r', encoding='utf-8') as f:
                 sql = f.read()
-
-            conn.executescript(sql)
-            cur.execute(
-                "INSERT INTO schema_migrations (filename, applied_at) VALUES (?, ?)",
-                (filename, datetime.datetime.now(datetime.timezone.utc).isoformat(" ")),
-            )
+            
+            try:
+                conn.execute("BEGIN")
+                
+                statements = [stmt.strip() for stmt in sql.split(';') if stmt.strip()]
+                for statement in statements:
+                    conn.execute(statement)
+                
+                conn.execute(
+                    "INSERT INTO schema_migrations (filename, applied_at) VALUES (?, ?)",
+                    (filename, datetime.datetime.now(datetime.timezone.utc).isoformat(" ")),
+                )
+                
+                conn.commit()
+                logger.info(f"+{filename}")
+                
+            except sqlite3.Error as e:
+                logger.error(f"Failed to apply migration {filename}: {e}")
+                conn.rollback()
+                continue
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     db_path = os.getenv("DATABASE_PATH")
@@ -55,17 +89,19 @@ if __name__ == "__main__":
         sys.exit(1)
     
     db_path = Path(db_path)
+    if not db_path.exists():
+        create_migration_versioning_table(db_path)
+
     args = sys.argv[1:]
-    if args and args[0] == "--reset":
+    if args and args[0] == "--rebuild":
         conn = sqlite3.connect(db_path)
         keep_table= "schema_migrations"
         with conn:
-            cur = conn.cursor()
-            cur.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name != '{keep_table}';")
-            tables = cur.fetchall()
+            tables = conn.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name != '{keep_table}';").fetchall()
             for table in tables:
-                cur.execute(f"DROP TABLE IF EXISTS {table[0]};")
-            cur.execute(f"DELETE FROM {keep_table};")
-        logger.info(f"Reset database")
+                conn.execute(f"DROP TABLE IF EXISTS {table[0]};")
+            conn.execute(f"DELETE FROM {keep_table};")
+        logger.info("Reset database")
 
     run_migrations(db_path)
+    logger.info("Table is up-to-date.")

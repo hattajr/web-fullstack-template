@@ -3,9 +3,10 @@ import shlex
 import sys
 from pathlib import Path
 import sqlite3
+import os
 
 
-DATABASE_PATH = "data/{{ cookiecutter.project_name }}.db"
+# DATABASE_PATH = os.getenv("DATABASE_PATH")
 
 def init_venv():
     # logger.info("Initializing virtual environment...")
@@ -38,30 +39,9 @@ def install_core_dependencies():
         # logger.error("Failed to install core dependencies.")
         sys.exit(1)
 
-def create_migration_versioning_table(db_file_path):
-    # SQLite
-    # logger.info("Creating migration versioning...")
-    db_file_path = Path(db_file_path)
-
-    sql_schema_migration = """
-        PRAGMA foreign_keys = ON;
-        PRAGMA journal_mode = WAL;
-        PRAGMA synchronous = NORMAL;
-        PRAGMA temp_store = MEMORY;
-        PRAGMA cache_size = -20000;
-
-        CREATE TABLE IF NOT EXISTS schema_migrations (
-            filename TEXT PRIMARY KEY,
-            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );"""
-    
-    conn = sqlite3.connect(db_file_path)
-    with conn:
-        conn.executescript(sql_schema_migration)
-    
-    # logger.info("Migration versioning table created.")
 
 if __name__ == "__main__":
     init_venv()
     install_core_dependencies()
-    create_migration_versioning_table(DATABASE_PATH)
+    # print(DATABASE_PATH)
+    # create_migration_versioning_table(DATABASE_PATH)
