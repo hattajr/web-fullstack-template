@@ -90,6 +90,8 @@ if __name__ == "__main__":
     
     db_path = Path(db_path)
     if not db_path.exists():
+        if not db_path.parent.exists():
+            db_path.parent.mkdir(parents=True)
         create_migration_versioning_table(db_path)
 
     args = sys.argv[1:]
