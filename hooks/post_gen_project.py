@@ -1,6 +1,7 @@
-import subprocess
 import shlex
+import subprocess
 import sys
+
 
 def install_core_dependencies():
     print("Installing core dependencies...")
@@ -10,14 +11,14 @@ def install_core_dependencies():
     except Exception as e:
         print(f"Error installing core dependencies: {e}")
         sys.exit(1)
-    
+
     print(f"STDOUT: {result.stdout}")
     print(f"STDERR: {result.stderr}")
 
     if result.returncode != 0:
         print(f"Failed to install core dependencies. Exit code: {result.returncode}")
         sys.exit(1)
-    
+
     print("✓ Dependencies installed successfully!")
 
 
