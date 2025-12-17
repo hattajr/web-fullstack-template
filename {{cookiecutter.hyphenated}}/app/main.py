@@ -2,38 +2,61 @@ import os
 from loguru import logger
 import sys
 import uvicorn
-import aiosqlite
 
 from fastapi import FastAPI, Depends, HTTPException, Request, Form
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
+from contextlib import asynccontextmanager
+import subprocess
 
-from db import get_db
+from db.connection import get_connection
+from routers import root
+from core.config import settings
 
 logger.remove()
 logger.add(
     sys.stderr,
-    level=os.getenv("LOG_LEVEL", "INFO"),
+    level=settings.LOG_LEVEL,
     enqueue=True,
-    format="[<level>{level: <8}</level>] <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+    format=settings.LOG_FORMAT
 )
 
-app = FastAPI()
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        # Use standalone tailwind
+        "uvx --from pytailwindcss tailwindcss -i app/static/css/input.css -o app/static/css/tailwind.css --minify"
+        subprocess.run([
+            "uv",
+            "tool",
+            "run",
+            "--from",
+            "pytailwindcss",
+            "tailwindcss",
+            "-i",
+            "app/static/css/input.css",
+            "-o",
+            "app/static/css/tailwind.css",
+            "--minify"
+        ])
+    except Exception as e:
+        logger.error(f"Error running tailwindcss: {e}")
 
-@app.get("/")
-def home_page(request: Request, db: aiosqlite.Connection = Depends((get_db))):
-    context = {}
-    return templates.TemplateResponse(request, 'home/index.html', context=context)
+    yield
+
+app = FastAPI(lifespan=lifespan, title="QuickMart POS", version="1.0.0")
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+app.include_router(root.router, tags=["root"])
 
 if __name__ == "__main__":
-    # Default will set as devmode (e.g hot reloading, etc)
     uvicorn.run(
         "main:app",
-        host=os.getenv("APP_HOST", "0.0.0.0"),
-        port=int(os.getenv("APP_PORT", "9021")),
-        workers=int(os.getenv("WORKERS", "1")),
-        reload=bool(int(os.getenv("RELOAD", "1"))),
+        host=settings.APP_HOST,
+        port=settings.APP_PORT,
+        workers=settings.APP_WORKERS,
+        reload=settings.APP_HOT_RELOAD
     )

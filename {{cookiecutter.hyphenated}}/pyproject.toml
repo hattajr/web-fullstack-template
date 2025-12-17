@@ -1,0 +1,29 @@
+[project]
+name = "{{ cookiecutter.hyphenated }}"
+version = "1.0.0"
+requires-python = ">=3.12"
+description = "{{ cookiecutter.description or "" }}"
+readme = "README.md"
+license = "Apache-2.0"
+dependencies = [
+    "fastapi",
+    "httpx",
+    "itsdangerous",
+    "jinja2",
+    "loguru",
+    "psycopg2-binary",
+    "pydantic",
+    "python-multipart",
+    "pyyaml",
+    "ua-parser",
+    "user-agents",
+    "uvicorn",
+    "pydantic-settings",
+]
+[project.optional-dependencies]
+tests = [
+    "pytest",
+    "testcontainers[postgres]"
+]
+
+
