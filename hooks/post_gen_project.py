@@ -24,5 +24,3 @@ def install_core_dependencies():
 
 if __name__ == "__main__":
     install_core_dependencies()
-    # print(DATABASE_PATH)
-    # create_migration_versioning_table(DATABASE_PATH)
