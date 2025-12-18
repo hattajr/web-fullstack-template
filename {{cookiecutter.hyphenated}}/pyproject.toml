@@ -26,4 +26,27 @@ tests = [
     "testcontainers[postgres]"
 ]
 
+[tool.ruff]
+line-length = 99
+exclude = [".venv_uv*", "*/.*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "UP", "B", "I", "N", "ANN"]
+ignore = ["ANN101", "ANN102", "ANN003", "RUF033", "ANN204"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ANN"]
+"__init__.py" = ["E402"]
+"**/{tests,docs,tools}/*" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = 20
+preview = true
+exclude = ["*.pyi", "**/temp/**", ".trash/**"]
 
