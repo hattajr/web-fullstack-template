@@ -2,6 +2,33 @@
 
 A production-ready cookiecutter template for building modern web applications with FastAPI, optional PostgreSQL database, and TailwindCSS.
 
+## How It Works
+
+```mermaid
+flowchart LR
+    A[User Input<br/>project name, description<br/>database URL optional] --> B[Validate & Generate]
+    B --> C[Create .env Files<br/>random ports & secrets]
+    C --> D[Install Dependencies<br/>uv sync]
+    D --> E{Database?}
+    E -->|Yes| F[Setup Database<br/>+ migrations]
+    E -->|No| G[Remove DB files]
+    F --> H[Ready to Use]
+    G --> H
+    
+    style A fill:#e1f5e1
+    style H fill:#e1f5e1
+    style C fill:#e1e5ff
+    style F fill:#e1e5ff
+```
+
+**What happens:**
+1. **Collects your inputs** - Project name, description, optional database URL
+2. **Validates** - Checks database URL format if provided
+3. **Generates .env files** - Random ports (8000+, 9000+) and secure secret keys
+4. **Installs dependencies** - Runs `uv sync` automatically
+5. **Configures database** - If URL provided: tests connection, adds to .env, creates databases
+6. **Ready!** - Project is configured and ready to run
+
 ## Stack
 
 ### Backend

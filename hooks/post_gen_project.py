@@ -1,8 +1,66 @@
 import os
+import secrets
 import shlex
 import shutil
+import socket
 import subprocess
 import sys
+
+
+def find_available_port(start_port=8000, max_attempts=100):
+    """Find an available port starting from start_port."""
+    for port in range(start_port, start_port + max_attempts):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(("", port))
+                return port
+        except OSError:
+            continue
+    return start_port  # Fallback to start_port if none found
+
+
+def generate_secret_key():
+    """Generate a secure random secret key."""
+    return secrets.token_urlsafe(32)
+
+
+def create_env_files():
+    """Create .env.dev and .env.prod files with dynamic values."""
+    print("\nCreating environment files...")
+
+    # Generate values
+    dev_port = find_available_port(8000)
+    prod_port = find_available_port(9000)
+    dev_secret = generate_secret_key()
+    prod_secret = generate_secret_key()
+
+    # Create .env.dev
+    env_dev_content = f"""LOG_LEVEL=DEBUG
+
+APP_HOST=0.0.0.0
+APP_PORT={dev_port}
+APP_WORKERS=1
+APP_HOT_RELOAD=True
+SECRET_KEY={dev_secret}
+"""
+
+    # Create .env.prod
+    env_prod_content = f"""LOG_LEVEL=INFO
+
+APP_HOST=0.0.0.0
+APP_PORT={prod_port}
+APP_WORKERS=3
+APP_HOT_RELOAD=False
+SECRET_KEY={prod_secret}
+"""
+
+    with open(".env.dev", "w") as f:
+        f.write(env_dev_content)
+    print(f"  ✓ Created .env.dev (port: {dev_port})")
+
+    with open(".env.prod", "w") as f:
+        f.write(env_prod_content)
+    print(f"  ✓ Created .env.prod (port: {prod_port})")
 
 
 def install_core_dependencies():
@@ -111,8 +169,13 @@ url = make_url('{database_url}')
 print(url.database)
 dev_db = url.database + "_dev"
 print(dev_db)
+
+# Add sslmode=disable to both prod and dev URLs
+prod_url = url.update_query_dict(dict(sslmode='disable'))
+dev_url = url.set(database=dev_db).update_query_dict(dict(sslmode='disable'))
+
 # Render with password visible
-dev_url = url.set(database=dev_db)
+print(prod_url.render_as_string(hide_password=False))
 print(dev_url.render_as_string(hide_password=False))
 """
 
@@ -131,13 +194,16 @@ print(dev_url.render_as_string(hide_password=False))
         lines = result.stdout.strip().split("\n")
         prod_db_name = lines[0]
         dev_db_name = lines[1]
-        dev_url_str = lines[2]
+        prod_url_str = lines[2]
+        dev_url_str = lines[3]
 
         # Write to .env.prod
         env_prod_path = ".env.prod"
         if os.path.exists(env_prod_path):
             with open(env_prod_path, "a") as f:
-                f.write(f"\nDATABASE_URL={database_url}\n")
+                f.write(f"\nDATABASE_URL={prod_url_str}\n")
+                f.write("DBMATE_MIGRATIONS_DIR=./migrations\n")
+                f.write("DBMATE_SCHEMA_FILE=migrations/schema.sql\n")
             print(f"  ✓ Added DATABASE_URL to {env_prod_path}")
 
         # Write to .env.dev
@@ -145,13 +211,15 @@ print(dev_url.render_as_string(hide_password=False))
         if os.path.exists(env_dev_path):
             with open(env_dev_path, "a") as f:
                 f.write(f"\nDATABASE_URL={dev_url_str}\n")
+                f.write("DBMATE_MIGRATIONS_DIR=./migrations\n")
+                f.write("DBMATE_SCHEMA_FILE=migrations/schema.sql\n")
             print(f"  ✓ Added DATABASE_URL to {env_dev_path} (database: {dev_db_name})")
 
         # Try to create production database using dbmate
         print(f"\nAttempting to create production database: {prod_db_name}")
         try:
             env = os.environ.copy()
-            env["DATABASE_URL"] = database_url
+            env["DATABASE_URL"] = prod_url_str
             env["DBMATE_SCHEMA_FILE"] = "migrations/schema.sql"
 
             result = subprocess.run(
@@ -219,5 +287,6 @@ print(dev_url.render_as_string(hide_password=False))
 
 
 if __name__ == "__main__":
+    create_env_files()
     install_core_dependencies()
     setup_database()
