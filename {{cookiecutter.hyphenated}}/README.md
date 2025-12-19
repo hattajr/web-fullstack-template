@@ -23,28 +23,35 @@ sudo chmod +x /usr/local/bin/dbmate
 
 ### Database Commands
 
-```bash
-# Create the database (if it doesn't exist)
-dbmate create
+All dbmate commands use `--env-file` to specify the environment:
 
-# Run all pending migrations
-dbmate up
+```bash
+# Run migrations (development)
+dbmate --env-file .env.dev up
 
 # Create a new migration
-dbmate new create_users_table
+dbmate --env-file .env.dev new create_users_table
 
 # Rollback the last migration
-dbmate down
+dbmate --env-file .env.dev down
 
 # Check migration status
-dbmate status
+dbmate --env-file .env.dev status
+
+# For production, use .env.prod
+dbmate --env-file .env.prod up
 ```
 
 ### Environment Variables
 
-Database connection is configured via `DATABASE_URL` environment variable:
-- Development: `.env.dev` (uses `{{ cookiecutter.project_name }}_dev` database)
-- Production: `.env.prod`
+Environment files are auto-generated during project setup:
+- **Development**: `.env.dev` (uses `{{ cookiecutter.underscored }}_dev` database)
+- **Production**: `.env.prod` (uses `{{ cookiecutter.underscored }}` database)
+
+Each includes:
+- `DATABASE_URL` with `?sslmode=disable` appended
+- `DBMATE_MIGRATIONS_DIR=./migrations`
+- `DBMATE_SCHEMA_FILE=migrations/schema.sql`
 
 ### Migration Files
 
@@ -60,10 +67,10 @@ See [migrations/README.md](migrations/README.md) for detailed migration instruct
 
 ```bash
 # Create your first migration
-dbmate new create_initial_tables
+dbmate --env-file .env.dev new create_initial_tables
 
 # Edit the migration file, then apply it
-dbmate up
+dbmate --env-file .env.dev up
 ```
 
 {% endif %}

@@ -97,39 +97,45 @@ You'll be prompted for:
 
 ### Database URL Format
 
-If including database support, use this format:
+If including database support, provide a PostgreSQL connection string:
+
+**With database name:**
 ```
 postgresql://username:password@host:port/database_name
 ```
 
-**Examples:**
-```bash
-# Local development
-postgresql://dev:devpass@localhost:5432/myapp_dev
-
-# Production with SSL
-postgresql://prod:securepass@db.example.com:5432/myapp?sslmode=require
+**Without database name** (will use project name):
+```
+postgresql://username:password@host:port
 ```
 
-Leave empty to generate a project without database support.
+**Examples:**
+```bash
+# Using project name as database
+postgresql://dev:devpass@localhost:5432
+
+# Specifying database name
+postgresql://dev:devpass@localhost:5432/myapp
+```
+
+**Note:** `?sslmode=disable` is automatically added to URLs in generated `.env` files for local development. Leave empty to generate a project without database support.
 
 ### Run Your Application
 
 ```bash
 cd your-project-name
 
-# Install dependencies
-uv sync
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your configuration
+# Dependencies are already installed during generation!
+# .env files are already created with random ports and secrets!
 
 # Run development server
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uv run --env-file .env.dev uvicorn app.main:app --reload
+
+# Or for production
+uv run --env-file .env.prod uvicorn app.main:app
 ```
 
-Visit `http://localhost:8000`
+Visit `http://localhost:<PORT>` (port shown in .env.dev)
 
 ## Project Structure
 
@@ -224,21 +230,36 @@ pytailwindcss   # TailwindCSS compiler
 
 ## Environment Variables
 
-Create `.env` file with:
+**Auto-generated during project creation:**
 
+`.env.dev` (development):
 ```bash
-# Server
+LOG_LEVEL=DEBUG
 APP_HOST=0.0.0.0
-APP_PORT=8000
+APP_PORT=8000  # Random available port
 APP_WORKERS=1
-APP_HOT_RELOAD=true
+APP_HOT_RELOAD=True
+SECRET_KEY=<random-secure-key>
 
-# Database (if using PostgreSQL)
-DATABASE_URL=postgresql://user:pass@localhost:5432/dbname
+# If database provided:
+DATABASE_URL=postgresql://user:pass@host:port/dbname_dev?sslmode=disable
+DBMATE_MIGRATIONS_DIR=./migrations
+DBMATE_SCHEMA_FILE=migrations/schema.sql
+```
 
-# Logging
+`.env.prod` (production):
+```bash
 LOG_LEVEL=INFO
-LOG_FORMAT="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+APP_HOST=0.0.0.0
+APP_PORT=9000  # Random available port
+APP_WORKERS=3
+APP_HOT_RELOAD=False
+SECRET_KEY=<random-secure-key>
+
+# If database provided:
+DATABASE_URL=postgresql://user:pass@host:port/dbname?sslmode=disable
+DBMATE_MIGRATIONS_DIR=./migrations
+DBMATE_SCHEMA_FILE=migrations/schema.sql
 ```
 
 ## Testing
