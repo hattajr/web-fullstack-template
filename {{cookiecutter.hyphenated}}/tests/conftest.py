@@ -1,5 +1,6 @@
 """Pytest configuration and fixtures for testing."""
 {% if cookiecutter.database_url %}
+import glob
 import os
 
 import psycopg2
@@ -32,10 +33,10 @@ def get_test_connection():
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_database(request):
     """
-    Start PostgreSQL container for all tests.
+    Start PostgreSQL container and run migrations.
     
     This fixture runs once per test session and provides a clean
-    PostgreSQL database for testing.
+    PostgreSQL database for testing with schema loaded from migrations.
     """
     postgres_container.start()
 
@@ -51,6 +52,20 @@ def setup_test_database(request):
     import importlib
     from app.core import config
     importlib.reload(config)
+    
+    # Run migrations from migrations/ directory
+    migration_dir = os.path.join(os.path.dirname(__file__), '..', 'migrations')
+    sql_files = sorted([
+        f for f in glob.glob(f"{migration_dir}/*.sql") 
+        if os.path.basename(f) not in ['schema.sql', 'README.md']
+    ])
+    
+    with get_test_connection() as conn:
+        with conn.cursor() as cur:
+            for sql_file in sql_files:
+                with open(sql_file, 'r') as f:
+                    cur.execute(f.read())
+            conn.commit()
 
     return postgres_container
 
