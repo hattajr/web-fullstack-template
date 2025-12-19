@@ -1,0 +1,18 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: {{ cookiecutter.hyphenated }}
+    env_file:
+      - .env.dev
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    environment:
+      - APP_HOST=${APP_HOST}
+      - APP_PORT=${APP_PORT}
+      - APP_WORKERS=${APP_WORKERS}
+      - APP_HOT_RELOAD=${APP_HOT_RELOAD}
+      - SECRET_KEY=${SECRET_KEY}
+      - LOG_LEVEL=${LOG_LEVEL}
+      {% if cookiecutter.database_url %}- DATABASE_URL=${DATABASE_URL}{% endif %}
