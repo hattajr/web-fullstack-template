@@ -1,348 +1,117 @@
 # Web Fullstack Cookiecutter Template
 
-A production-ready cookiecutter template for building modern web applications with FastAPI, optional PostgreSQL database, and TailwindCSS.
-
-## How It Works
-
-```mermaid
-flowchart LR
-    A[User Input<br/>project name, description<br/>database URL optional] --> B[Validate & Generate]
-    B --> C[Create .env Files<br/>random ports & secrets]
-    C --> D[Install Dependencies<br/>uv sync]
-    D --> E{Database?}
-    E -->|Yes| F[Setup Database<br/>+ migrations]
-    E -->|No| G[Remove DB files]
-    F --> H[Ready to Use]
-    G --> H
-    
-    style A fill:#e1f5e1
-    style H fill:#e1f5e1
-    style C fill:#e1e5ff
-    style F fill:#e1e5ff
-```
-
-**What happens:**
-1. **Collects your inputs** - Project name, description, optional database URL
-2. **Validates** - Checks database URL format if provided
-3. **Generates .env files** - Random ports (8000+, 9000+) and secure secret keys
-4. **Installs dependencies** - Runs `uv sync` automatically
-5. **Configures database** - If URL provided: tests connection, adds to .env, creates databases
-6. **Ready!** - Project is configured and ready to run
+Generate production-ready web apps with FastAPI, PostgreSQL, and TailwindCSS. Run one command, get a working application with tests, migrations, and Docker support.
 
 ## Stack
 
-### Backend
-- **FastAPI** - Modern, fast web framework for building APIs
-- **Python 3.12+** - Latest Python with modern features
-- **Uvicorn** - Lightning-fast ASGI server
-- **Pydantic** - Data validation using Python type annotations
-- **Loguru** - Simple and powerful logging
+**Backend:** FastAPI, Python 3.12+, Uvicorn, Pydantic, Loguru
 
-### Frontend
-- **Jinja2** - Template engine for server-side rendering
-- **TailwindCSS** - Utility-first CSS framework (via pytailwindcss)
-- **HTMX-ready** - Structure supports progressive enhancement
+**Frontend:** Jinja2 templates, TailwindCSS (pytailwindcss), HTMX-ready
 
-### Database (Optional)
-- **PostgreSQL** - Robust relational database
-- **SQLAlchemy** - SQL toolkit and ORM
-- **psycopg2** - PostgreSQL adapter
+**Database:** PostgreSQL (optional), psycopg2, dbmate migrations
 
-### Development Tools
-- **uv** - Fast Python package manager
-- **Ruff** - Lightning-fast linter and formatter
-- **pytest** - Testing framework (optional)
+**Tools:** uv, Ruff, pytest, testcontainers, Docker
 
-## What
+## Quick Start
 
-This template generates a structured FastAPI web application with:
-- Server-side rendered templates with Jinja2
-- Static file serving (CSS, JS, images)
-- Optional PostgreSQL database integration
-- Environment-based configuration
-- Development and production-ready setup
-- Pre-configured linting and formatting
-- Automatic TailwindCSS compilation
-
-## How to Use
-
-### Prerequisites
-- Python 3.12 or higher
-- uv package manager (`pip install uv` or use system package manager)
-- PostgreSQL (only if using database option)
+**Prerequisites:** Python 3.12+, uv, PostgreSQL (if using database)
 
 ### Generate Project
 
 ```bash
-# Install cookiecutter
-uv tool install cookiecutter
-
-# Generate project
 uv tool run cookiecutter gh:hattajr/web-fullstack-template
-
-# Or from local template
-uv tool run cookiecutter /path/to/web-fullstack-template
 ```
 
-### Configuration Prompts
+Prompts: project name, description, GitHub username, PostgreSQL URL (optional: `postgresql://user:pass@host:port/db`)
 
-You'll be prompted for:
-- `project_name` - Your project name (e.g., "My Awesome App")
-- `description` - Brief project description
-- `github_username` - Your GitHub username
-- `author_name` - Your name
-- `database_url` - PostgreSQL connection string (leave empty to skip database)
-  - Format: `postgresql://username:password@host:port/database`
-  - Example: `postgresql://myuser:mypass@localhost:5432/mydb`
+Leave database URL empty to skip database setup.
 
-### Database URL Format
-
-If including database support, provide a PostgreSQL connection string:
-
-**With database name:**
-```
-postgresql://username:password@host:port/database_name
-```
-
-**Without database name** (will use project name):
-```
-postgresql://username:password@host:port
-```
-
-**Examples:**
-```bash
-# Using project name as database
-postgresql://dev:devpass@localhost:5432
-
-# Specifying database name
-postgresql://dev:devpass@localhost:5432/myapp
-```
-
-**Note:** `?sslmode=disable` is automatically added to URLs in generated `.env` files for local development. Leave empty to generate a project without database support.
-
-### Run Your Application
+### Run
 
 ```bash
 cd your-project-name
-
-# Dependencies are already installed during generation!
-# .env files are already created with random ports and secrets!
-
-# Run development server
 uv run --env-file .env.dev app/main.py
-
-# Or for production
-uv run --env-file .env.prod app/main.py
 ```
 
-Visit `http://localhost:<PORT>` (port shown in .env.dev)
+Dependencies installed, .env files created with random ports and secrets. Just run.
 
-## Project Structure
+## Structure
 
 ```
-your-project/
-├── app/                     # Application package
-│   ├── main.py              # Application entry point
-│   ├── core/
-│   │   ├── config.py        # Settings and configuration
-│   │   └── security.py      # Security utilities
-│   ├── db/                  # Database (if enabled)
-│   │   └── connection.py    # DB connection management
-│   ├── routers/             # API routes
-│   │   └── root.py          # Root routes
-│   ├── schemas/             # Pydantic models
-│   ├── services/            # Business logic
-│   ├── static/              # Static assets
-│   │   ├── css/
-│   │   ├── js/
-│   │   └── images/
-│   ├── templates/           # Jinja2 templates
-│   │   ├── shared/
-│   │   └── home/
-│   └── utils/               # Helper functions
-├── tests/                   # Test files (uses testcontainers for DB tests)
-│   ├── conftest.py          # Pytest fixtures
-│   └── test_database.py     # Example database tests
-├── migrations/              # Database migrations (if enabled)
-├── data/                    # Application data
-├── docker-compose.yml       # Docker Compose configuration
-├── Dockerfile               # Multi-stage Docker build using uv
-├── .dockerignore            # Docker build exclusions
-├── pyproject.toml           # Project dependencies and uv configuration
-├── .env.dev                 # Development environment variables
-├── .env.prod                # Production environment variables
-└── README.md                # Project documentation
-
-**Note:** Files within `app/` use simple imports (e.g., `from core.config import settings`),
-not `app.` prefixed imports. The `pyproject.toml` includes `[tool.uv.sources]` to make the
-app package importable by tests.
+app/
+  main.py            # Entry point
+  core/              # Config, security
+  db/                # Database connection
+  routers/           # Routes
+  services/          # Business logic
+  templates/         # Jinja2 templates
+  static/            # CSS, JS, images
+tests/               # Tests with testcontainers
+migrations/          # Database migrations (dbmate)
+docker-compose.yml   # Docker setup
+.env.dev/.env.prod   # Environment configs
 ```
 
-## Integrations
-
-### TailwindCSS
-Automatically compiled on startup via pytailwindcss. Edit `app/static/css/input.css` and classes are auto-generated.
-
-### Database (PostgreSQL)
-When database URL is provided:
-- Validates connection on project creation
-- Creates database if it doesn't exist
-- Sets up SQLAlchemy connection pooling
-- Includes migration schema template
-
-### Session Management
-Built-in session middleware using `itsdangerous` for secure session cookies.
-
-### Static Files
-Automatic static file serving from `app/static/` at `/static/` endpoint.
-
-### Templates
-Jinja2 templates with:
-- Base template with common structure
-- Template inheritance support
-- Static file URL generation
-- Context processors ready
-
-## Dependencies
-
-### Core Dependencies
-```toml
-fastapi          # Web framework
-uvicorn          # ASGI server
-pydantic         # Data validation
-pydantic-settings # Settings management
-jinja2           # Template engine
-loguru           # Logging
-httpx            # HTTP client
-python-multipart # Form parsing
-itsdangerous     # Secure sessions
-pyyaml           # YAML support
-ua-parser        # User agent parsing
-user-agents      # User agent detection
-```
-
-### Optional Dependencies
-```toml
-# With database
-sqlalchemy       # ORM
-psycopg2-binary  # PostgreSQL driver
-
-# Testing
-pytest           # Testing framework
-testcontainers   # Container-based testing
-```
-
-### Development Tools
-```toml
-ruff            # Linter and formatter (configured)
-pytailwindcss   # TailwindCSS compiler
-```
-
-## Environment Variables
-
-**Auto-generated during project creation:**
-
-`.env.dev` (development):
-```bash
-LOG_LEVEL=DEBUG
-APP_HOST=0.0.0.0
-APP_PORT=8000  # Random available port
-APP_WORKERS=1
-APP_HOT_RELOAD=True
-SECRET_KEY=<random-secure-key>
-
-# If database provided:
-DATABASE_URL=postgresql://user:pass@host:port/dbname_dev?sslmode=disable
-DBMATE_MIGRATIONS_DIR=./migrations
-DBMATE_SCHEMA_FILE=migrations/schema.sql
-```
-
-`.env.prod` (production):
-```bash
-LOG_LEVEL=INFO
-APP_HOST=0.0.0.0
-APP_PORT=9000  # Random available port
-APP_WORKERS=3
-APP_HOT_RELOAD=False
-SECRET_KEY=<random-secure-key>
-
-# If database provided:
-DATABASE_URL=postgresql://user:pass@host:port/dbname?sslmode=disable
-DBMATE_MIGRATIONS_DIR=./migrations
-DBMATE_SCHEMA_FILE=migrations/schema.sql
-```
-
-## Testing
-
-Run tests:
-```bash
-# Install test dependencies
-uv sync --extra tests
-
-# Run tests with environment variables
-uv run --env-file .env.dev pytest
-
-# Or run specific tests
-uv run --env-file .env.dev pytest tests/test_database.py -v
-```
-
-Test the template itself:
-```bash
-# From template root directory
-uv run test_template.py
-```
-
-## Docker Support
-
-The template includes production-ready Docker configuration:
-
-### Dockerfile
-- **Multi-stage build** using uv's official Docker images
-- **Optimized caching** for fast rebuilds
-- **Minimal final image** with only runtime dependencies
-- **No EXPOSE directive** (use dynamic port mapping)
-
-### Docker Compose
-- Single service configuration for the app
-- Dynamic port mapping from .env files
-- Easy switching between dev/prod environments
-
-```bash
-# Build and run with development settings
-docker-compose --env-file .env.dev up --build
-
-# Build and run with production settings
-docker-compose --env-file .env.prod up --build
-
-# Stop services
-docker-compose down
-```
-
-**Note:** The database is not included in docker-compose. Use an external PostgreSQL instance or add a db service if needed.
-
-## Testing with Testcontainers
-
-Projects with database support include automatic PostgreSQL testcontainers integration:
-
-- **Real database testing** - Tests run against actual PostgreSQL in Docker
-- **Automatic lifecycle** - Container starts/stops automatically with pytest
-- **Isolated tests** - Each test gets a clean database state
-- **Zero configuration** - Just ensure Docker is running
-
-See `tests/conftest.py` for fixture configuration and `tests/test_database.py` for examples.
+Imports use `from core.config` not `from app.core.config`.
 
 ## Features
 
-- **Type-safe configuration** - Pydantic settings with environment variable support (lowercase fields, uppercase env vars)
-- **Structured logging** - Loguru with custom formatting
-- **Hot reload** - Development server with auto-reload
-- **Database pooling** - SQLAlchemy connection pool (when using DB)
-- **Security** - Session management, CORS-ready
-- **Production-ready** - Multi-worker support, proper logging, Docker support
-- **Modern Python** - Type hints, async/await, Python 3.12+
-- **Code quality** - Pre-configured Ruff for linting and formatting
-- **Testing** - pytest with testcontainers for database tests
-- **TailwindCSS** - Automatic compilation on startup
+**TailwindCSS:** Auto-compiles on startup. Edit `app/static/css/input.css`.
+
+**Database:** Creates database on setup, connection pooling via psycopg2, dbmate migrations.
+
+**Sessions:** Secure cookie-based sessions via itsdangerous.
+
+**Static Files:** Served from `/static/`.
+
+**Templates:** Jinja2 with inheritance and static URL generation.
+
+## Environment
+
+Auto-generated `.env.dev` and `.env.prod` with random ports and secure keys:
+
+```bash
+APP_PORT=8000        # Random available port
+SECRET_KEY=<random>  # Secure random key
+DATABASE_URL=...     # If provided
+```
+
+Dev uses hot reload, single worker. Prod uses multiple workers, no reload.
+
+## Testing
+
+```bash
+uv sync --extra tests
+uv run --env-file .env.dev pytest
+```
+
+### Testcontainers
+
+Tests with database support use testcontainers - real PostgreSQL in Docker:
+
+**How it works:**
+1. `conftest.py` starts PostgreSQL container once per test session
+2. Runs all migration files from `migrations/` directory
+3. Each test gets clean tables via auto-truncation
+4. Container stops after tests complete
+
+**Why:**
+- Test against real database, not mocks
+- Migrations tested exactly as production
+- Zero configuration - Docker just needs to be running
+- Tests in isolation
+
+Write service tests that just use `get_test_connection()`. Schema already loaded from migrations. See `tests/README.md` for examples.
+
+## Docker
+
+```bash
+docker-compose --env-file .env.dev up --build
+```
+
+Multi-stage build with uv. Minimal final image. Dynamic port mapping from .env files.
+
+Database not included - use external PostgreSQL or add db service.
 
 ## License
 
