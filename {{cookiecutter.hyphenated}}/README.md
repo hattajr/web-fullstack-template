@@ -94,6 +94,46 @@ docker run -p 8000:8000 --env-file .env.dev {{ cookiecutter.hyphenated }}
 
 The application will be available at the port configured in your .env file (check with `grep APP_PORT .env.dev`)
 
+## Testing
+
+This project uses [pytest](https://pytest.org/){% if cookiecutter.database_url %} with [testcontainers](https://testcontainers.com/){% endif %} for testing.
+
+### Install test dependencies
+
+```bash
+uv sync --extra tests
+```
+
+### Run tests
+
+```bash
+# Run all tests
+uv run --env-file .env.dev pytest
+
+# Run with verbose output
+uv run --env-file .env.dev pytest -v
+
+# Run specific test file
+uv run --env-file .env.dev pytest tests/test_database.py
+
+# Run tests with coverage
+uv run --env-file .env.dev pytest --cov=app
+```
+
+{% if cookiecutter.database_url %}**About Testcontainers:**
+
+The test suite uses [Testcontainers](https://testcontainers.com/) to automatically spin up a real PostgreSQL database in a Docker container for testing. This provides:
+
+- **Real database testing** - No mocks, tests run against actual PostgreSQL
+- **Isolation** - Each test session gets a fresh database
+- **Automatic cleanup** - Containers are automatically removed after tests
+- **No manual setup** - Docker is the only requirement
+
+The PostgreSQL container is started once per test session and shared across all tests for performance. Each individual test gets a clean database state via the `clean_database` fixture in `tests/conftest.py`.
+
+**Requirements:** Docker must be running for tests to work.
+{% endif %}
+
 ## Docker Deployment
 
 This project includes Docker support using [uv's official Docker images](https://docs.astral.sh/uv/guides/integration/docker/).

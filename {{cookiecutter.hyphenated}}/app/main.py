@@ -20,9 +20,9 @@ from core.config import settings
 logger.remove()
 logger.add(
     sys.stderr,
-    level=settings.LOG_LEVEL,
+    level=settings.log_level,
     enqueue=True,
-    format=settings.LOG_FORMAT
+    format=settings.log_format
 )
 
 @asynccontextmanager
@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan, title="QuickMart POS", version="1.0.0")
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(root.router, tags=["root"])
@@ -57,8 +57,8 @@ app.include_router(root.router, tags=["root"])
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
-        host=settings.APP_HOST,
-        port=settings.APP_PORT,
-        workers=settings.APP_WORKERS,
-        reload=settings.APP_HOT_RELOAD
+        host=settings.app_host,
+        port=settings.app_port,
+        workers=settings.app_workers,
+        reload=settings.app_hot_reload
     )

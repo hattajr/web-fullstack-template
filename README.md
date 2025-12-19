@@ -129,10 +129,10 @@ cd your-project-name
 # .env files are already created with random ports and secrets!
 
 # Run development server
-uv run --env-file .env.dev uvicorn app.main:app --reload
+uv run --env-file .env.dev app/main.py
 
 # Or for production
-uv run --env-file .env.prod uvicorn app.main:app
+uv run --env-file .env.prod app/main.py
 ```
 
 Visit `http://localhost:<PORT>` (port shown in .env.dev)
@@ -141,7 +141,7 @@ Visit `http://localhost:<PORT>` (port shown in .env.dev)
 
 ```
 your-project/
-├── app/
+├── app/                     # Application package
 │   ├── main.py              # Application entry point
 │   ├── core/
 │   │   ├── config.py        # Settings and configuration
@@ -160,12 +160,22 @@ your-project/
 │   │   ├── shared/
 │   │   └── home/
 │   └── utils/               # Helper functions
-├── data/                    # Application data
+├── tests/                   # Test files (uses testcontainers for DB tests)
+│   ├── conftest.py          # Pytest fixtures
+│   └── test_database.py     # Example database tests
 ├── migrations/              # Database migrations (if enabled)
-├── tests/                   # Test files
-├── pyproject.toml           # Project dependencies
-├── .env                     # Environment variables
-└── README.md               # Project documentation
+├── data/                    # Application data
+├── docker-compose.yml       # Docker Compose configuration
+├── Dockerfile               # Multi-stage Docker build using uv
+├── .dockerignore            # Docker build exclusions
+├── pyproject.toml           # Project dependencies and uv configuration
+├── .env.dev                 # Development environment variables
+├── .env.prod                # Production environment variables
+└── README.md                # Project documentation
+
+**Note:** Files within `app/` use simple imports (e.g., `from core.config import settings`),
+not `app.` prefixed imports. The `pyproject.toml` includes `[tool.uv.sources]` to make the
+app package importable by tests.
 ```
 
 ## Integrations
@@ -269,8 +279,11 @@ Run tests:
 # Install test dependencies
 uv sync --extra tests
 
-# Run tests
-uv run pytest
+# Run tests with environment variables
+uv run --env-file .env.dev pytest
+
+# Or run specific tests
+uv run --env-file .env.dev pytest tests/test_database.py -v
 ```
 
 Test the template itself:
@@ -279,16 +292,57 @@ Test the template itself:
 uv run test_template.py
 ```
 
+## Docker Support
+
+The template includes production-ready Docker configuration:
+
+### Dockerfile
+- **Multi-stage build** using uv's official Docker images
+- **Optimized caching** for fast rebuilds
+- **Minimal final image** with only runtime dependencies
+- **No EXPOSE directive** (use dynamic port mapping)
+
+### Docker Compose
+- Single service configuration for the app
+- Dynamic port mapping from .env files
+- Easy switching between dev/prod environments
+
+```bash
+# Build and run with development settings
+docker-compose --env-file .env.dev up --build
+
+# Build and run with production settings
+docker-compose --env-file .env.prod up --build
+
+# Stop services
+docker-compose down
+```
+
+**Note:** The database is not included in docker-compose. Use an external PostgreSQL instance or add a db service if needed.
+
+## Testing with Testcontainers
+
+Projects with database support include automatic PostgreSQL testcontainers integration:
+
+- **Real database testing** - Tests run against actual PostgreSQL in Docker
+- **Automatic lifecycle** - Container starts/stops automatically with pytest
+- **Isolated tests** - Each test gets a clean database state
+- **Zero configuration** - Just ensure Docker is running
+
+See `tests/conftest.py` for fixture configuration and `tests/test_database.py` for examples.
+
 ## Features
 
-- **Type-safe configuration** - Pydantic settings with environment variable support
+- **Type-safe configuration** - Pydantic settings with environment variable support (lowercase fields, uppercase env vars)
 - **Structured logging** - Loguru with custom formatting
 - **Hot reload** - Development server with auto-reload
 - **Database pooling** - SQLAlchemy connection pool (when using DB)
 - **Security** - Session management, CORS-ready
-- **Production-ready** - Multi-worker support, proper logging
+- **Production-ready** - Multi-worker support, proper logging, Docker support
 - **Modern Python** - Type hints, async/await, Python 3.12+
 - **Code quality** - Pre-configured Ruff for linting and formatting
+- **Testing** - pytest with testcontainers for database tests
+- **TailwindCSS** - Automatic compilation on startup
 
 ## License
 

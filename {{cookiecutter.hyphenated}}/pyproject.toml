@@ -23,8 +23,20 @@ dependencies = [
 ]
 [project.optional-dependencies]
 tests = [
-    "pytest",{% if cookiecutter.database_url %}
+    "pytest",
+    "pytest-cov",{% if cookiecutter.database_url %}
     "testcontainers[postgres]",{% endif %}
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
 ]
 
 [tool.ruff]
@@ -51,3 +63,5 @@ docstring-code-line-length = 20
 preview = true
 exclude = ["*.pyi", "**/temp/**", ".trash/**"]
 
+[tool.uv.sources]
+app = { path = "./app" }
