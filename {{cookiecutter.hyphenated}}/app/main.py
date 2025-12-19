@@ -11,7 +11,9 @@ from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
 import subprocess
 
+{% if cookiecutter.database_url %}
 from db.connection import get_connection
+{% endif %}
 from routers import root
 from core.config import settings
 

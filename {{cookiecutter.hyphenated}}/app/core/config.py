@@ -1,4 +1,7 @@
 from pydantic_settings import BaseSettings
+{% if cookiecutter.database_url %}
+from sqlalchemy.engine.url import make_url
+{% endif %}
 
 class Settings(BaseSettings):
     # App
@@ -11,14 +14,40 @@ class Settings(BaseSettings):
     APP_WORKERS:int
     APP_HOT_RELOAD:bool
     
+    {% if cookiecutter.database_url %}
     # Database
-    DB_HOST: str
-    DB_PORT: int
-    DB_USERNAME: str
-    DB_PASSWORD: str
-    DB_NAME: str
-    DB_POOL_SIZE: int = 10
-    DB_MAX_OVERFLOW: int = 20
+    DATABASE_URL: str
+    
+    @property
+    def db_host(self) -> str:
+        """Parse and return database host from DATABASE_URL."""
+        url = make_url(self.DATABASE_URL)
+        return url.host
+    
+    @property
+    def db_port(self) -> int:
+        """Parse and return database port from DATABASE_URL."""
+        url = make_url(self.DATABASE_URL)
+        return url.port or 5432
+    
+    @property
+    def db_username(self) -> str:
+        """Parse and return database username from DATABASE_URL."""
+        url = make_url(self.DATABASE_URL)
+        return url.username
+    
+    @property
+    def db_password(self) -> str:
+        """Parse and return database password from DATABASE_URL."""
+        url = make_url(self.DATABASE_URL)
+        return url.password
+    
+    @property
+    def db_name(self) -> str:
+        """Parse and return database name from DATABASE_URL."""
+        url = make_url(self.DATABASE_URL)
+        return url.database
+    {% endif %}
     
     # Security
     SECRET_KEY: str

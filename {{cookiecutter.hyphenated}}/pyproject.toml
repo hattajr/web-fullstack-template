@@ -11,8 +11,9 @@ dependencies = [
     "itsdangerous",
     "jinja2",
     "loguru",
-    "psycopg2-binary",
-    "pydantic",
+    {% if cookiecutter.database_url %}"psycopg2-binary",
+    "sqlalchemy",
+    {% endif %}"pydantic",
     "python-multipart",
     "pyyaml",
     "ua-parser",
@@ -22,8 +23,8 @@ dependencies = [
 ]
 [project.optional-dependencies]
 tests = [
-    "pytest",
-    "testcontainers[postgres]"
+    "pytest",{% if cookiecutter.database_url %}
+    "testcontainers[postgres]",{% endif %}
 ]
 
 [tool.ruff]

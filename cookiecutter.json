@@ -5,6 +5,7 @@
   "underscored": "{{ cookiecutter.hyphenated.replace('-', '_') }}",
   "github_username": "",
   "author_name": "",
+  "database_url": "",
   "_dot_gitignore": ".gitignore",
   "_dot_trash": ".trash",
   "_copy_without_render": [
