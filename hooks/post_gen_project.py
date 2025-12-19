@@ -51,8 +51,10 @@ def setup_database():
         return
 
     # Check if database URL is missing the database name and append project name
-    if database_url.rstrip('/').count('/') == 2:  # Only protocol://user:pass@host:port format
-        database_url = database_url.rstrip('/') + '/' + project_name
+    if (
+        database_url.rstrip("/").count("/") == 2
+    ):  # Only protocol://user:pass@host:port format
+        database_url = database_url.rstrip("/") + "/" + project_name
         print("\nℹ No database name provided in URL")
         print(f"  → Using project name as database: {project_name}")
 
