@@ -27,6 +27,7 @@ def install_core_dependencies():
 def setup_database():
     """Set up database environment files and create dev database if database_url provided."""
     database_url = "{{ cookiecutter.database_url }}".strip()
+    project_name = "{{ cookiecutter.underscored }}"
 
     if not database_url:
         print("\nNo database URL provided - removing database-related files...")
@@ -48,6 +49,12 @@ def setup_database():
 
         print("✓ Database files removed")
         return
+
+    # Check if database URL is missing the database name and append project name
+    if database_url.rstrip('/').count('/') == 2:  # Only protocol://user:pass@host:port format
+        database_url = database_url.rstrip('/') + '/' + project_name
+        print("\nℹ No database name provided in URL")
+        print(f"  → Using project name as database: {project_name}")
 
     print("\nSetting up database environment...")
 

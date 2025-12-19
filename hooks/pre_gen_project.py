@@ -15,11 +15,21 @@ def validate_database_url():
 
     print("Validating database URL format...")
 
-    # Validate URL format
+    # Check if database name is missing (ends with port or host without a database)
+    # Pattern for URL without database: postgres://user:pass@host:port or postgres://user:pass@host
+    no_db_pattern = r"^postgres(?:ql)?://[^:]+:[^@]+@[^:/]+(?::\d+)?/?(?:\?.*)?$"
+    
+    if re.match(no_db_pattern, database_url):
+        print("  ℹ No database name found in URL")
+        print("  → Will use project name as database name")
+        return
+
+    # Validate URL format with database name
     postgres_pattern = r"^postgres(?:ql)?://[^:]+:[^@]+@[^:/]+(?::\d+)?/[^/]+(?:\?.*)?$"
     if not re.match(postgres_pattern, database_url):
         print("ERROR: Invalid DATABASE_URL format")
         print("Expected format: postgres://username:password@host:port/database_name")
+        print("  or: postgres://username:password@host:port (database name will be set to project name)")
         print(f"Received: {database_url}")
         sys.exit(1)
 
